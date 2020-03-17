@@ -9,7 +9,21 @@ class Zeus extends StatefulWidget{
 }
 
 class _ZeusState extends State<Zeus>{
-  
+
+  String _cityEntered;
+
+  Future _goToNextScreen(BuildContext context) async {
+    Map results = await Navigator.of(context).push(
+      new MaterialPageRoute<Map<dynamic,dynamic>>(builder: (BuildContext context) {
+        return new ChangeCity();
+      })
+    );
+    if(results != null && results.containsKey('enter')){
+      _cityEntered = results['enter'];
+    //  print("From first screen" + results['enter'].toString());
+    }
+  }
+
   void showWeather() async {
     Map data = await getWeather(util.appID, util.defaultCity);
     print(data.toString());
@@ -26,7 +40,7 @@ class _ZeusState extends State<Zeus>{
         actions: <Widget>[
           new IconButton(
               icon: new Icon(Icons.menu),
-              onPressed: showWeather
+              onPressed: () { _goToNextScreen(context);}
           )
         ],
       ) ,
@@ -44,7 +58,7 @@ class _ZeusState extends State<Zeus>{
           new Container(
             alignment: Alignment.topRight,
              margin: const EdgeInsets.fromLTRB(0.0, 10.9, 20.9, 0.0),
-             child: new Text('Zaporizhia',
+             child: new Text('${_cityEntered == null ? util.defaultCity : _cityEntered}',
              style: cityStyle(),),
           ),
 
@@ -62,24 +76,23 @@ class _ZeusState extends State<Zeus>{
           new Container(
             margin: const EdgeInsets.fromLTRB(30, 250, 0, 0),
             alignment: Alignment.center,
-            child: updateTempWidget("Zaporizhia"),
+            child: updateTempWidget(_cityEntered),
           )
         ]
       ),
     );
   }
-  Future<Map> getWeather(String appId, String city) async {
-    String apiUrl = 'http://api.openweathermap.org/data/2.5/weather?q=$city&'
-    'appid=${util.appID}&units=metric';
-    http.Response response = await http.get(apiUrl);
 
+  Future<Map> getWeather(String appId, String city) async {
+    String apiUrl = 'http://api.openweathermap.org/data/2.5/weather?q=$city&appid=${util.appID}&units=metric';
+    http.Response response = await http.get(apiUrl);
     return json.decode(response.body);
 
   }
 
   Widget updateTempWidget(String city) {
     return new FutureBuilder(
-        future: getWeather(util.appID, city),
+        future: getWeather(util.appID, city == null ? util.defaultCity : city),
         builder: (BuildContext context, AsyncSnapshot<Map> snapshot){
           //тут будем инфу с джейсона брать пажилого, виджеты делать н1 и т.д
           if(snapshot.hasData){
@@ -91,13 +104,24 @@ class _ZeusState extends State<Zeus>{
                   children: <Widget>[
                     new ListTile(
                       title: new Text(content['main']['temp'].toString(),
-                      style: new TextStyle(
+                        style: new TextStyle(
                         fontStyle: FontStyle.normal,
                         fontSize: 50,
-                        color: Colors.black,
+                        color: Colors.pink,
                         fontWeight: FontWeight.w500
-                      ),),
+                      ),
+                      ),
+
+                    ),
+                    new ListTile(
+                      title: new Text(content['main']['feels_like'].toString(),
+                        style: new TextStyle(
+                        fontStyle: FontStyle.normal,
+                        fontSize: 50,
+                        color: Colors.pink,
+                        fontWeight: FontWeight.w500),
                     )
+                    ),
                   ],
                 ),
               );
@@ -108,6 +132,55 @@ class _ZeusState extends State<Zeus>{
         });
   }
 }
+
+class ChangeCity extends StatelessWidget {
+  var _cityFieldController = new TextEditingController();
+  @override
+  Widget build(BuildContext context) {
+    return new Scaffold(
+      appBar: new AppBar(
+        backgroundColor: Colors.blue,
+        title: new Text('Change city'),
+        centerTitle: true,
+      ),
+      body: new Stack(
+        children: <Widget>[
+          new Center(
+            child: new Image.asset(
+              'assets/images/GG.jpg',
+              fit: BoxFit.fill,),
+          ),
+          new ListView(
+            children: <Widget>[
+              new ListTile(
+                title: new TextField(
+                  decoration: new InputDecoration(
+                    hintText: 'Enter city'
+                  ),
+                  controller: _cityFieldController,
+                  keyboardType: TextInputType.text,
+                ),
+              ),
+              new ListTile(
+                title: new FlatButton(
+                    onPressed: () {
+                      Navigator.pop(context, {
+                        'enter': _cityFieldController.text
+                      });
+                    },
+                    textColor: Colors.white70,
+                    color: Colors.redAccent,
+                    child: new Text('Get Weather')),
+              )
+            ],
+          )
+
+        ],
+      )
+    );
+  }
+}
+
 
 
 

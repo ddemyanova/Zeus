@@ -19,7 +19,9 @@ class _ZeusState extends State<Zeus>{
       })
     );
     if(results != null && results.containsKey('enter')){
-      _cityEntered = results['enter'];
+      setState((){
+      _cityEntered = results['enter'];}
+      );
     //  print("From first screen" + results['enter'].toString());
     }
   }
@@ -166,7 +168,8 @@ class ChangeCity extends StatelessWidget {
                     onPressed: () {
                       Navigator.pop(context, {
                         'enter': _cityFieldController.text
-                      });
+                      }
+                    );
                     },
                     textColor: Colors.white70,
                     color: Colors.redAccent,
